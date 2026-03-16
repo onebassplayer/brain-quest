@@ -1,0 +1,649 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🧠 Brain Quest</title>
+    <link href="https://fonts.googleapis.com/css2?family=Fredoka+One&family=Nunito:wght@400;700;800;900&display=swap" rel="stylesheet">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        :root {
+            --bg: #07091a; --card: #0f1629; --border: #1e2d4a;
+            --gold: #fbbf24; --blue: #38bdf8; --green: #4ade80;
+            --orange: #fb923c; --purple: #c084fc; --red: #ef4444;
+            --text: #e2e8f0; --muted: #94a3b8;
+        }
+        body { font-family: 'Nunito', sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; }
+        .stars { position: fixed; inset: 0; z-index: 0; overflow: hidden; pointer-events: none; }
+        .star { position: absolute; border-radius: 50%; background: white; animation: twinkle var(--dur,3s) ease-in-out infinite; animation-delay: var(--delay,0s); }
+        @keyframes twinkle { 0%,100%{opacity:0.12} 50%{opacity:0.85} }
+        .container { position: relative; z-index: 1; max-width: 700px; margin: 0 auto; padding: 28px 20px; min-height: 100vh; display: flex; flex-direction: column; align-items: center; justify-content: center; }
+        .screen { display: none; width: 100%; animation: fadeIn 0.4s ease; }
+        .screen.active { display: flex; flex-direction: column; align-items: center; }
+        @keyframes fadeIn { from{opacity:0;transform:translateY(20px)} to{opacity:1;transform:translateY(0)} }
+        h1 { font-family: 'Fredoka One', cursive; font-size: clamp(2.4rem,8vw,3.8rem); line-height: 1.05; text-align: center; }
+        h2 { font-family: 'Fredoka One', cursive; font-size: clamp(1.5rem,5vw,2rem); text-align: center; margin-bottom: 8px; }
+        .subtitle { font-size: 1rem; color: var(--muted); text-align: center; margin-top: 6px; font-weight: 800; }
+        .gradient-text { background: linear-gradient(135deg,#fbbf24,#fb923c,#f472b6); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; }
+        .glow { text-shadow: 0 0 40px rgba(251,191,36,0.5); }
+        .card { background: var(--card); border: 2px solid var(--border); border-radius: 20px; padding: 24px; width: 100%; margin: 12px 0; }
+        .btn { display: block; font-family: 'Fredoka One', cursive; font-size: 1.25rem; padding: 15px 28px; border-radius: 16px; border: none; cursor: pointer; transition: transform 0.15s, box-shadow 0.15s; text-align: center; width: 100%; margin: 8px 0; }
+        .btn:hover:not(:disabled) { transform: translateY(-2px); }
+        .btn:active:not(:disabled) { transform: scale(0.96) !important; }
+        .btn:disabled { opacity: 0.35; cursor: not-allowed; }
+        .btn-gold  { background: linear-gradient(135deg,#fbbf24,#f59e0b); color: #1a0900; box-shadow: 0 4px 24px rgba(251,191,36,0.4); }
+        .btn-gold:hover:not(:disabled)  { box-shadow: 0 6px 32px rgba(251,191,36,0.6); }
+        .btn-green { background: linear-gradient(135deg,#4ade80,#22c55e); color: #001a08; box-shadow: 0 4px 20px rgba(74,222,128,0.35); }
+        .btn-blue  { background: linear-gradient(135deg,#38bdf8,#0ea5e9); color: #001520; box-shadow: 0 4px 20px rgba(56,189,248,0.35); }
+        .world-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; width: 100%; margin: 16px 0; }
+        .world-btn { font-family: 'Fredoka One', cursive; font-size: 1.1rem; padding: 20px 12px; border-radius: 20px; border: 3px solid transparent; cursor: pointer; display: flex; flex-direction: column; align-items: center; gap: 8px; transition: transform 0.2s; }
+        .world-btn .wemoji { font-size: 2.6rem; }
+        .world-btn:hover { transform: translateY(-5px); }
+        .world-btn:active { transform: scale(0.95); }
+        .world-dino      { background: linear-gradient(135deg,#0d1f0d,#1a3a14); border-color:#4ade80; color:#4ade80; }
+        .world-sports    { background: linear-gradient(135deg,#0d1020,#0e2040); border-color:#38bdf8; color:#38bdf8; }
+        .world-minecraft { background: linear-gradient(135deg,#1f1005,#3a1e00); border-color:#fb923c; color:#fb923c; }
+        .world-roblox    { background: linear-gradient(135deg,#1a0520,#2d0840); border-color:#c084fc; color:#c084fc; }
+        .progress-bar { width: 100%; display: flex; gap: 8px; margin: 12px 0 20px; }
+        .progress-dot { height: 10px; border-radius: 999px; background: var(--border); transition: all 0.35s; flex: 1; }
+        .progress-dot.done   { background: var(--gold); }
+        .progress-dot.active { background: var(--blue); box-shadow: 0 0 10px rgba(56,189,248,0.6); }
+        .power-badge { font-family: 'Fredoka One', cursive; font-size: 0.85rem; padding: 6px 18px; border-radius: 999px; display: inline-block; margin-bottom: 10px; letter-spacing: 0.5px; border: 2px solid transparent; }
+        .question-text { font-family: 'Fredoka One', cursive; font-size: clamp(1.1rem,4vw,1.55rem); line-height: 1.45; text-align: center; margin: 6px 0 16px; }
+        .passage-text { font-size: 1.08rem; line-height: 2; font-weight: 700; }
+        .ai-bubble { background: rgba(56,189,248,0.07); border: 2px solid rgba(56,189,248,0.22); border-radius: 20px 20px 20px 4px; padding: 16px 20px; margin: 10px 0; width: 100%; display: none; }
+        .ai-bubble.vis { display: block; animation: fadeIn 0.3s ease; }
+        .ai-label { font-family: 'Fredoka One', cursive; font-size: 0.72rem; color: var(--blue); letter-spacing: 1.5px; margin-bottom: 6px; }
+        .ai-text  { font-size: 1.08rem; font-weight: 800; line-height: 1.65; }
+        .child-bubble { background: rgba(251,191,36,0.07); border: 2px solid rgba(251,191,36,0.2); border-radius: 20px 20px 4px 20px; padding: 14px 18px; margin: 8px 0; width: 100%; display: none; min-height: 52px; }
+        .child-bubble.vis { display: block; }
+        .child-label { font-family: 'Fredoka One', cursive; font-size: 0.72rem; color: var(--gold); letter-spacing: 1.5px; margin-bottom: 6px; }
+        .child-text { font-size: 1rem; font-weight: 700; line-height: 1.6; }
+        .thinking { display: none; align-items: center; gap: 12px; padding: 14px 20px; background: rgba(192,132,252,0.07); border: 2px solid rgba(192,132,252,0.18); border-radius: 16px; margin: 10px 0; width: 100%; }
+        .thinking.vis { display: flex; }
+        .tdots { display: flex; gap: 6px; }
+        .tdot { width: 8px; height: 8px; border-radius: 50%; background: var(--purple); animation: blink 1.2s ease-in-out infinite; }
+        .tdot:nth-child(2){animation-delay:.2s} .tdot:nth-child(3){animation-delay:.4s}
+        @keyframes blink { 0%,100%{opacity:0.3;transform:scale(0.8)} 50%{opacity:1;transform:scale(1.2)} }
+        .ttext { font-family: 'Fredoka One', cursive; color: var(--purple); font-size: 0.95rem; }
+        .mic-area { display: flex; flex-direction: column; align-items: center; width: 100%; margin-top: 4px; }
+        .mic-btn { width: 96px; height: 96px; border-radius: 50%; border: none; font-size: 2.5rem; cursor: pointer; display: flex; align-items: center; justify-content: center; margin: 12px auto; transition: box-shadow 0.2s, transform 0.15s; }
+        .mic-btn.idle { background: linear-gradient(145deg,#1a3f60,#0ea5e9); box-shadow: 0 0 28px rgba(14,165,233,0.45),0 0 0 6px rgba(14,165,233,0.12); cursor: pointer; }
+        .mic-btn.rec  { background: linear-gradient(145deg,#5f1a1a,#ef4444); box-shadow: 0 0 36px rgba(239,68,68,0.7),0 0 0 8px rgba(239,68,68,0.18); animation: pulse 1.1s ease-in-out infinite; cursor: pointer; }
+        .mic-btn.off  { background: #1e2d4a; cursor: not-allowed; opacity: 0.35; animation: none; }
+        @keyframes pulse { 0%,100%{transform:scale(1)} 50%{transform:scale(1.07)} }
+        .mic-label { font-family: 'Fredoka One', cursive; font-size: 0.95rem; color: var(--muted); text-align: center; min-height: 1.4em; }
+        .sound-bar { display: none; justify-content: center; align-items: center; gap: 4px; margin: 4px 0; }
+        .sound-bar.vis { display: flex; }
+        .sound-bar span { display: block; width: 4px; border-radius: 999px; background: var(--blue); animation: wave 0.8s ease-in-out infinite; }
+        .sound-bar span:nth-child(1){height:10px} .sound-bar span:nth-child(2){height:18px;animation-delay:.1s}
+        .sound-bar span:nth-child(3){height:24px;animation-delay:.2s} .sound-bar span:nth-child(4){height:18px;animation-delay:.3s}
+        .sound-bar span:nth-child(5){height:10px;animation-delay:.4s}
+        @keyframes wave { 0%,100%{transform:scaleY(0.4)} 50%{transform:scaleY(1)} }
+        .sound-lbl { font-family:'Fredoka One',cursive; font-size:0.8rem; color:var(--blue); text-align:center; display:none; }
+        .sound-lbl.vis { display: block; }
+        .nudge { font-family:'Fredoka One',cursive; font-size:0.82rem; color:var(--orange); background:rgba(251,146,60,0.1); border:1px solid rgba(251,146,60,0.3); padding:5px 14px; border-radius:999px; display:none; margin-bottom:8px; }
+        .nudge.vis { display: inline-block; }
+        .errmsg { color:#f87171; font-size:0.88rem; font-weight:800; text-align:center; margin:6px 0; display:none; line-height:1.5; }
+        .errmsg.vis { display: block; }
+        .setup-lbl { font-family:'Fredoka One',cursive; font-size:0.8rem; color:var(--muted); letter-spacing:1.5px; margin-bottom:8px; display:block; }
+        .api-input { width:100%; background:rgba(255,255,255,0.05); border:2px solid var(--border); border-radius:12px; padding:13px 16px; font-size:0.95rem; font-family:'Nunito',sans-serif; font-weight:700; color:var(--text); outline:none; transition:border-color 0.2s; }
+        .api-input:focus { border-color:var(--blue); }
+        .info-box { background:rgba(56,189,248,0.06); border:1px solid rgba(56,189,248,0.2); border-radius:14px; padding:16px 18px; margin:10px 0; width:100%; }
+        .info-box p { font-size:0.9rem; font-weight:800; line-height:1.75; color:var(--text); }
+        .info-box strong { color:var(--blue); }
+        .step-row { display:flex; align-items:flex-start; gap:12px; margin:8px 0; }
+        .step-num { font-family:'Fredoka One',cursive; font-size:1.1rem; color:var(--gold); min-width:28px; }
+        .step-txt { font-size:0.9rem; font-weight:800; line-height:1.6; }
+        .summary-item { background:rgba(255,255,255,0.03); border:1px solid var(--border); border-radius:14px; padding:15px 17px; margin:8px 0; }
+        .sum-qlbl { font-family:'Fredoka One',cursive; font-size:0.72rem; color:var(--muted); letter-spacing:1px; margin-bottom:4px; }
+        .sum-qtxt { font-size:0.88rem; font-weight:800; margin-bottom:7px; }
+        .sum-ans  { font-size:0.85rem; font-weight:700; color:var(--muted); line-height:1.5; margin-bottom:7px; font-style:italic; }
+        .sum-badge { display:inline-block; font-family:'Fredoka One',cursive; font-size:0.75rem; padding:3px 12px; border-radius:999px; }
+        .b-strong  { background:rgba(74,222,128,0.12); color:var(--green); border:1px solid rgba(74,222,128,0.28); }
+        .b-growing { background:rgba(251,191,36,0.12); color:var(--gold); border:1px solid rgba(251,191,36,0.28); }
+        .brain-icon { font-size:5rem; display:block; margin:16px 0; text-align:center; animation:bob 2s ease-in-out infinite alternate; }
+        @keyframes bob { from{transform:translateY(0)} to{transform:translateY(-10px)} }
+        .complete-star { font-size:5rem; text-align:center; display:block; animation:spin-in .5s cubic-bezier(.34,1.56,.64,1) both, bob 1.5s .5s ease-in-out infinite alternate; }
+        @keyframes spin-in { from{transform:rotate(-10deg) scale(0.6);opacity:0} to{transform:rotate(0) scale(1);opacity:1} }
+        .confetti-piece { position:fixed; top:-20px; animation:fall linear forwards; z-index:999; pointer-events:none; }
+        @keyframes fall { to{transform:translateY(110vh) rotate(720deg);opacity:0} }
+        .voice-chip { display:inline-block; font-family:'Fredoka One',cursive; font-size:0.75rem; padding:4px 12px; border-radius:999px; background:rgba(74,222,128,0.1); border:1px solid rgba(74,222,128,0.25); color:var(--green); margin-top:8px; }
+        @media(max-width:480px){ .world-grid{grid-template-columns:1fr} .container{padding:16px} }
+    </style>
+</head>
+<body>
+<div class="stars" id="stars"></div>
+<div class="container">
+
+    <!-- SETUP (parent only) -->
+    <div class="screen" id="screen-setup">
+        <span class="brain-icon">🔐</span>
+        <h2>Parent Setup</h2>
+        <p class="subtitle" style="margin-bottom:16px;">Do this once. Your son won't see this screen again.</p>
+
+        <div class="card">
+            <span class="setup-lbl">STEP 1 — MICROPHONE (one time on this Mac)</span>
+            <div class="info-box" style="margin-bottom:14px;">
+                <div class="step-row"><span class="step-num">1.</span><span class="step-txt">Open <strong>System Settings</strong> → <strong>Privacy &amp; Security</strong> → <strong>Microphone</strong></span></div>
+                <div class="step-row"><span class="step-num">2.</span><span class="step-txt">Make sure <strong>Safari</strong> is switched <strong>ON</strong></span></div>
+                <div class="step-row"><span class="step-num">3.</span><span class="step-txt">Open this file in <strong>Safari</strong> (not Chrome) — Safari has much better voices and remembers mic permission permanently</span></div>
+                <div class="step-row"><span class="step-num">4.</span><span class="step-txt">First time he taps the mic in Safari, click <strong>Allow</strong>. Safari will never ask again.</span></div>
+            </div>
+
+            <span class="setup-lbl">STEP 2 — API KEY</span>
+            <input type="password" class="api-input" id="api-input" placeholder="sk-ant-..." autocomplete="off"/>
+            <p style="color:var(--muted);font-size:0.83rem;font-weight:700;margin-top:10px;line-height:1.7;">
+                Get a key at <strong style="color:var(--blue)">console.anthropic.com</strong> → API Keys → Create Key<br>
+                Saved on this device only. Never leaves this browser.
+            </p>
+            <div class="errmsg" id="setup-err">Please enter your API key to continue.</div>
+        </div>
+        <button class="btn btn-gold" onclick="saveKey()" style="max-width:280px;">Save &amp; Launch 🚀</button>
+    </div>
+
+    <!-- WELCOME -->
+    <div class="screen" id="screen-welcome">
+        <h1 class="glow"><span class="gradient-text">BRAIN QUEST</span></h1>
+        <p class="subtitle">Train your thinking. Level up your brain.</p>
+        <span class="brain-icon">🧠</span>
+        <div class="card" style="text-align:center;">
+            <p style="font-size:1.1rem;font-weight:900;margin-bottom:10px;">Ready, thinker?</p>
+            <p style="color:var(--muted);font-size:1rem;font-weight:800;line-height:1.8;">
+                Pick a world. Read a longer story.<br>
+                Answer 5 Brain Challenges.<br>
+                Your AI Brain Coach talks with you!
+            </p>
+        </div>
+        <div id="voice-chip-wrap" style="text-align:center;"></div>
+        <button class="btn btn-gold" onclick="showScreen('screen-world')" style="max-width:280px;margin-top:14px;">⚡ START MISSION</button>
+    </div>
+
+    <!-- WORLD SELECT -->
+    <div class="screen" id="screen-world">
+        <h2>Choose Your World</h2>
+        <p class="subtitle">Pick one. Your adventure lives there.</p>
+        <div class="world-grid">
+            <button class="world-btn world-dino"      onclick="selectWorld('dino')"><span class="wemoji">🦕</span>Dino World</button>
+            <button class="world-btn world-sports"    onclick="selectWorld('sports')"><span class="wemoji">🏆</span>Sports Zone</button>
+            <button class="world-btn world-minecraft" onclick="selectWorld('minecraft')"><span class="wemoji">⛏️</span>Minecraft</button>
+            <button class="world-btn world-roblox"    onclick="selectWorld('roblox')"><span class="wemoji">🎮</span>Roblox</button>
+        </div>
+    </div>
+
+    <!-- READ -->
+    <div class="screen" id="screen-read">
+        <div style="display:flex;align-items:center;gap:12px;margin-bottom:14px;width:100%;">
+            <span id="world-emoji" style="font-size:2.2rem;"></span>
+            <h2 id="world-title" style="margin:0;"></h2>
+        </div>
+        <p style="color:var(--muted);font-weight:900;font-size:0.8rem;letter-spacing:2px;width:100%;margin-bottom:10px;">READ THIS CAREFULLY — ALL OF IT</p>
+        <div class="card" style="max-height:62vh;overflow-y:auto;">
+            <p class="passage-text" id="passage"></p>
+        </div>
+        <p style="color:var(--muted);font-weight:800;font-size:0.88rem;text-align:center;margin:8px 0 12px;">
+            Read every word. When you are totally done, tap the button.
+        </p>
+        <button class="btn btn-green" onclick="startMission()" style="max-width:300px;">I finished reading! ✅</button>
+    </div>
+
+    <!-- QUESTION + AI LOOP -->
+    <div class="screen" id="screen-q">
+        <div class="progress-bar">
+            <div class="progress-dot active" id="d0"></div>
+            <div class="progress-dot" id="d1"></div>
+            <div class="progress-dot" id="d2"></div>
+            <div class="progress-dot" id="d3"></div>
+            <div class="progress-dot" id="d4"></div>
+        </div>
+        <span class="power-badge" id="badge"></span>
+        <div class="nudge" id="nudge">Try again! You've got this 💪</div>
+        <p class="question-text" id="qtext"></p>
+        <div class="sound-bar" id="sound-bar"><span></span><span></span><span></span><span></span><span></span></div>
+        <p class="sound-lbl" id="sound-lbl">BRAIN COACH IS TALKING...</p>
+        <div class="ai-bubble" id="ai-bubble">
+            <div class="ai-label">🤖 BRAIN COACH</div>
+            <span class="ai-text" id="ai-text"></span>
+        </div>
+        <div class="thinking" id="thinking">
+            <div class="tdots"><div class="tdot"></div><div class="tdot"></div><div class="tdot"></div></div>
+            <span class="ttext">Brain Coach is thinking...</span>
+        </div>
+        <div class="child-bubble" id="child-bubble">
+            <div class="child-label">YOU SAID</div>
+            <div class="child-text" id="child-text"></div>
+        </div>
+        <div class="mic-area">
+            <button class="mic-btn idle" id="mic" onclick="tapMic()">🎤</button>
+            <p class="mic-label" id="mic-lbl">TAP TO SPEAK YOUR ANSWER</p>
+        </div>
+        <div class="errmsg" id="q-err"></div>
+    </div>
+
+    <!-- COMPLETE -->
+    <div class="screen" id="screen-done">
+        <span class="complete-star">⭐</span>
+        <h1 style="margin-top:10px;"><span class="gradient-text">MISSION COMPLETE!</span></h1>
+        <p class="subtitle">You did it, thinker! Your brain just leveled up!</p>
+        <div class="card" style="margin-top:22px;">
+            <p style="font-family:'Fredoka One',cursive;font-size:0.8rem;color:var(--gold);letter-spacing:2px;margin-bottom:14px;">📋 GROWN-UP SUMMARY</p>
+            <div id="summary"></div>
+        </div>
+        <button class="btn btn-gold" onclick="resetGame()" style="max-width:260px;margin-top:16px;">🔄 Play Again!</button>
+    </div>
+
+</div>
+
+<script>
+// ── STARS ──────────────────────────────────────────────────
+(function(){
+    const el = document.getElementById('stars');
+    for (let i = 0; i < 90; i++) {
+        const s = document.createElement('div'); s.className = 'star';
+        const sz = Math.random()*2.5+0.5;
+        s.style.cssText=`width:${sz}px;height:${sz}px;left:${Math.random()*100}%;top:${Math.random()*100}%;--dur:${2+Math.random()*4}s;--delay:${Math.random()*5}s;`;
+        el.appendChild(s);
+    }
+})();
+
+// ── CONTENT ────────────────────────────────────────────────
+const WORLDS = {
+    dino: {
+        emoji:'🦕', title:'Dino World',
+        passage:`For millions of years before humans ever existed, dinosaurs ruled almost every corner of the Earth. Among all of them, few were as fearsome or as fascinating as the Tyrannosaurus Rex. This massive predator could grow up to forty feet long and weigh as much as nine tons — about the same as two large elephants combined. Its skull alone was five feet long, and its jaw muscles were so powerful that scientists believe a single bite could crush bone the way you might crunch a potato chip.
+
+Yet for all its terrifying size, the T-Rex had arms that were surprisingly small and weak — so small they could not even reach its own mouth. Scientists are still debating exactly what those tiny arms were used for. Some think they helped the dinosaur push itself up off the ground after resting. Others believe they played a role in holding prey. For now, the arms remain one of paleontology's most interesting mysteries.
+
+What scientists do agree on is that the T-Rex had an extraordinary sense of smell, possibly stronger than almost any animal alive today. Its brain was largely devoted to processing scent information, which suggests it may have been able to track prey from miles away. It also had forward-facing eyes, which gave it excellent depth perception — helpful for judging exactly how far away its next meal was.
+
+There is still a major debate among scientists about whether the T-Rex was primarily a hunter that chased live prey, or a scavenger that fed on animals that had already died. The truth may be that it did both, depending on the opportunity. What is certain is that every fossil discovery teaches us something new, and our understanding of this animal continues to change. Science is not about finding final answers. It is about asking better and better questions.`
+    },
+    sports: {
+        emoji:'🏆', title:'Sports Zone',
+        passage:`The scoreboard read 54 to 54 with eleven seconds left on the clock. The gym was so loud that the players could barely hear each other. Marcus had the ball and was dribbling hard toward the three-point line, but his defender was right there with him, matching every move. Then Marcus did something unexpected. He stopped. He passed the ball to the left, where his teammate Jordan was standing wide open in the corner. Jordan caught it, set his feet, and released the ball just as the buzzer sounded.
+
+Swish. Game over. Jordan had won it.
+
+In the locker room afterward, everyone crowded around Jordan, celebrating. But Jordan kept pointing at Marcus. "He made that game," Jordan said. "He saw the open man and gave it up. That's harder than taking the shot yourself." Marcus smiled because he knew Jordan was right. It took real discipline to pass the ball in that moment. Every instinct was screaming at him to shoot. But he had practiced reading the defense hundreds of times, and his brain recognized the opening before he even had to think about it.
+
+That is what practice actually does to your brain. When you repeat a skill over and over, your brain builds faster and more efficient connections, almost like upgrading a computer. Reactions that once required careful thought become automatic. Athletes call this being "in the zone," but scientists call it automaticity — the ability to perform complex actions without conscious effort.
+
+The best athletes in the world are not just physically talented. They are students of their sport. They study film, learn from mistakes, practice under pressure, and train their minds just as hard as their bodies. Winning one game might come down to talent. Winning consistently, year after year, almost always comes down to something else entirely: the willingness to outwork everyone else when nobody is watching.`
+    },
+    minecraft: {
+        emoji:'⛏️', title:'Minecraft',
+        passage:`When a new player enters Minecraft for the very first time, the world looks overwhelming. There are forests, mountains, oceans, caves, and creatures in every direction. There is no instruction manual. No one tells you what to do first. The game simply drops you in and expects you to figure it out. That is not a design flaw. It is actually the whole point.
+
+Minecraft was created by a Swedish designer named Markus Persson, who wanted to build a game that rewarded curiosity and experimentation rather than following instructions. The result is one of the best-selling video games in history, with hundreds of millions of players worldwide. But here is the interesting part: players are not just having fun. Without realizing it, they are also developing real skills.
+
+Experienced Minecraft players think in systems. Before they build anything, they ask a series of questions: What materials do I need? Where can I find them? How much time will it take? What could go wrong? What is my backup plan? This kind of structured thinking — identifying a goal, planning the steps, anticipating problems — is the same process that engineers, architects, and scientists use in the real world.
+
+Managing resources in Minecraft teaches players about scarcity and trade-offs. If you use all your wood building a shelter, you have none left for tools. If you mine too deep without torches, you will get lost in the dark. Every decision has consequences, and players learn to think several steps ahead.
+
+Perhaps most importantly, Minecraft teaches players that failure is not the end. When you die in the game, you lose your items but you keep your knowledge. You remember exactly what went wrong, and you make a smarter plan the next time. That attitude — treating failure as information rather than defeat — is one of the most valuable things any person can learn, in a game or in real life.`
+    },
+    roblox: {
+        emoji:'🎮', title:'Roblox',
+        passage:`Most people think of Roblox as a video game. It is actually something much more interesting than that. Roblox is a platform — a place where millions of people, including kids as young as ten years old, build and publish their own games for other people to play. As of today, there are more than forty million experiences available on Roblox, almost all of them created by regular users, not professional game studios.
+
+Building a game on Roblox requires a surprising number of real-world skills. Creators use a programming language called Lua to write the rules and logic of their games. They design environments, balance difficulty levels, create reward systems, and test their games over and over to find bugs and problems. They also have to think about their audience. A game that is only fun for the person who made it will not attract other players. Good game design requires empathy — the ability to imagine what someone else is experiencing.
+
+Some young Roblox creators have turned their games into real businesses. There are teenagers who have earned thousands of dollars through in-game purchases, which Roblox converts into real money through a system called DevEx. These young entrepreneurs are learning about income, profit, marketing, and customer feedback before they even finish middle school.
+
+But money is not the most important thing that Roblox teaches. The real lesson is about creative persistence. Every successful game on the platform went through dozens of failed versions. Creators had to keep going even when their early attempts were buggy, boring, or broken. They had to listen to feedback from players, even when it was critical. They had to be willing to throw away hours of work and start a section over from scratch.
+
+The players who become builders are doing something different from everyone else. They are not just consuming what others create. They are asking a harder and more exciting question: what can I make that does not exist yet?`
+    }
+};
+
+const QS = [
+    { badge:'⚡ POWER-UP #1', color:'#38bdf8', bg:'rgba(56,189,248,0.15)',  text:'What was this story mostly about? Explain it in your own words — try to say at least two or three things.' },
+    { badge:'🔥 POWER-UP #2', color:'#fb923c', bg:'rgba(251,146,60,0.15)',  text:'What is one thing from this story that really surprised you, or that you did not know before? Why did it surprise you?' },
+    { badge:'🌟 POWER-UP #3', color:'#fbbf24', bg:'rgba(251,191,36,0.15)',  text:'Can you connect something from this story to your own life, something you have done, seen, or felt? Tell me about it.' },
+    { badge:'❓ POWER-UP #4', color:'#c084fc', bg:'rgba(192,132,252,0.15)', text:'What question are you still wondering about after reading this? What would you want to find out next, and why?' },
+    { badge:'💎 POWER-UP #5', color:'#4ade80', bg:'rgba(74,222,128,0.15)',  text:'What is your opinion about this story or the ideas in it? Do you agree or disagree with anything? Tell me what you think and give me a reason.' }
+];
+
+// ── STATE ──────────────────────────────────────────────────
+const G = {
+    key:'', world:null, qi:0, tries:0, log:[],
+    transcript:'', recog:null,
+    listening:false, speaking:false, thinking:false,
+    chosenVoice:null, resumeTimer:null, watchdog:null
+};
+
+// ── VOICE ──────────────────────────────────────────────────
+// Prefer macOS/Safari neural US male voices
+const VOICE_PRIORITY = [
+    'Aaron',            // macOS neural US male — best option in Safari
+    'Nolan',            // macOS US male
+    'Gordon',           // macOS US male
+    'Alex',             // classic macOS US male
+    'Fred',             // macOS US male
+    'Bruce',            // macOS US male
+    'Google US English Male',
+    'Junior',
+    'Bob'
+];
+
+function pickVoice(voices) {
+    for (const name of VOICE_PRIORITY) {
+        const v = voices.find(v => v.name === name);
+        if (v) return v;
+    }
+    // Avoid UK/AU voices explicitly
+    const avoid = ['Daniel','Google UK English Male','Moira','Karen','Tessa','Rishi','Veena'];
+    const usM = voices.find(v =>
+        v.lang && v.lang.startsWith('en-US') &&
+        !avoid.some(n => v.name.includes(n)) &&
+        (v.name.toLowerCase().includes('male') || !v.name.toLowerCase().includes('female'))
+    );
+    if (usM) return usM;
+    const usAny = voices.find(v => v.lang && v.lang.startsWith('en-US') && !avoid.some(n => v.name.includes(n)));
+    return usAny || voices.find(v => v.lang && v.lang.startsWith('en')) || voices[0] || null;
+}
+
+function initVoices() {
+    const voices = speechSynthesis.getVoices();
+    if (!voices.length) return;
+    G.chosenVoice = pickVoice(voices);
+    const wrap = document.getElementById('voice-chip-wrap');
+    if (wrap && G.chosenVoice) {
+        wrap.innerHTML = `<span class="voice-chip">🔊 Voice: ${G.chosenVoice.name}</span>`;
+    }
+}
+
+speechSynthesis.onvoiceschanged = initVoices;
+initVoices();
+setTimeout(initVoices, 500);
+setTimeout(initVoices, 1500);
+
+// ── TTS (Chrome freeze proof) ───────────────────────────────
+function startHeartbeat() {
+    stopHeartbeat();
+    G.resumeTimer = setInterval(() => { if (speechSynthesis.speaking) speechSynthesis.resume(); }, 4000);
+}
+function stopHeartbeat() { if (G.resumeTimer) { clearInterval(G.resumeTimer); G.resumeTimer = null; } }
+function startWatchdog(ms, resolve) {
+    if (G.watchdog) clearTimeout(G.watchdog);
+    G.watchdog = setTimeout(() => { speechSynthesis.cancel(); cleanupSpeech(); resolve(); }, ms);
+}
+function stopWatchdog() { if (G.watchdog) { clearTimeout(G.watchdog); G.watchdog = null; } }
+function cleanupSpeech() {
+    G.speaking = false; stopHeartbeat(); stopWatchdog();
+    vis('sound-bar', false); vis('sound-lbl', false); refreshMic();
+}
+
+function speak(text) {
+    return new Promise(resolve => {
+        speechSynthesis.cancel();
+        setTimeout(() => {
+            if (!text || !text.trim()) { resolve(); return; }
+            G.speaking = true; refreshMic();
+            vis('sound-bar', true); vis('sound-lbl', true);
+            const u = new SpeechSynthesisUtterance(text);
+            u.rate = 0.86; u.pitch = 1.0; u.volume = 1.0;
+            if (G.chosenVoice) u.voice = G.chosenVoice;
+            const estMs = (text.split(' ').length * 750) + 6000;
+            startWatchdog(estMs, resolve);
+            startHeartbeat();
+            u.onstart = () => startWatchdog(estMs, resolve);
+            u.onend   = () => { stopWatchdog(); cleanupSpeech(); resolve(); };
+            u.onerror = e  => { if (e.error === 'interrupted') return; stopWatchdog(); cleanupSpeech(); resolve(); };
+            speechSynthesis.speak(u);
+        }, 100);
+    });
+}
+
+// ── STT ────────────────────────────────────────────────────
+function makeRecog() {
+    const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+    if (!SR) return null;
+    const r = new SR();
+    r.continuous = false; r.interimResults = true; r.lang = 'en-US';
+
+    r.onstart = () => { G.listening = true; refreshMic(); vis('child-bubble', true); };
+
+    r.onresult = e => {
+        let interim = '', final = '';
+        for (let i = e.resultIndex; i < e.results.length; i++) {
+            if (e.results[i].isFinal) final += e.results[i][0].transcript;
+            else interim += e.results[i][0].transcript;
+        }
+        if (final) G.transcript += final + ' ';
+        g('child-text').textContent = (G.transcript + interim).trim() || '...';
+    };
+
+    r.onend = () => {
+        G.listening = false; refreshMic();
+        if (G.transcript.trim()) callAI();
+        else mlbl("I didn't hear you. Tap the mic and try again!");
+    };
+
+    r.onerror = e => {
+        G.listening = false; refreshMic();
+        if (e.error === 'not-allowed') {
+            err('q-err', 'Microphone is blocked.\nGo to System Settings → Privacy → Microphone → turn on Safari.');
+        } else if (e.error === 'no-speech') {
+            mlbl("Didn't catch that. Tap and speak clearly!");
+        } else {
+            mlbl('Something went wrong. Tap to try again.');
+        }
+    };
+    return r;
+}
+
+function tapMic() {
+    if (G.speaking || G.thinking) return;
+    if (!G.recog) {
+        G.recog = makeRecog();
+        if (!G.recog) { alert('Voice input needs Safari or Chrome. Please open this file in Safari for the best experience.'); return; }
+    }
+    if (G.listening) {
+        G.recog.stop();
+    } else {
+        G.transcript = '';
+        g('child-text').textContent = '';
+        vis('child-bubble', false); vis('ai-bubble', false); vis('thinking', false);
+        err('q-err', '');
+        try { G.recog.start(); }
+        catch(e) { G.recog = makeRecog(); if (G.recog) try { G.recog.start(); } catch(e2) { err('q-err', 'Mic error. Try reloading the page.'); } }
+    }
+}
+
+function refreshMic() {
+    const btn = g('mic'), lbl = g('mic-lbl');
+    if (!btn) return;
+    if (G.speaking) { btn.className='mic-btn off'; btn.textContent='🎤'; lbl.textContent='Wait for Brain Coach...'; return; }
+    if (G.thinking) { btn.className='mic-btn off'; btn.textContent='🎤'; lbl.textContent='Thinking...'; return; }
+    if (G.listening){ btn.className='mic-btn rec'; btn.textContent='🔴'; lbl.textContent='LISTENING... tap to stop'; return; }
+    btn.className='mic-btn idle'; btn.textContent='🎤'; lbl.textContent='TAP TO SPEAK YOUR ANSWER';
+}
+function mlbl(t) { const e = g('mic-lbl'); if(e) e.textContent = t; }
+
+// ── API ────────────────────────────────────────────────────
+async function callAI() {
+    const q = QS[G.qi], ans = G.transcript.trim(), attempt = G.tries + 1;
+    G.thinking = true; refreshMic(); vis('thinking', true); vis('ai-bubble', false);
+
+    const prompt = `You are Brain Coach, a warm and encouraging reading coach for an 8-year-old boy. He just read a longer, more challenging passage and answered a comprehension question by speaking aloud. His speech was transcribed — focus on meaning, not grammar.
+
+PASSAGE:
+${G.world.passage}
+
+QUESTION ASKED:
+${q.text}
+
+HIS SPOKEN ANSWER (attempt ${attempt} of 2):
+"${ans}"
+
+RULES — your response will be spoken aloud to him:
+- Keep it under 35 words.
+- Be warm, specific, and encouraging every single time.
+- Strong understanding: praise ONE specific detail from his answer. Set canAdvance true.
+- Weak, vague, or surface-level: do NOT say wrong. Ask ONE Socratic follow-up question that gently pushes him deeper without giving the answer. Set canAdvance false.
+- "I don't know" or empty: encourage warmly, ask one very simple guiding question. canAdvance false (unless attempt 2).
+- Attempt 2: affirm him warmly and set canAdvance true no matter what.
+- Never use the word "wrong". Never sound like a grader.
+
+Respond ONLY with valid JSON, no markdown, no backticks, no other text:
+{"quality":"strong" or "developing","response":"spoken words here","canAdvance":true or false}`;
+
+    try {
+        const res = await fetch('https://api.anthropic.com/v1/messages', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'x-api-key': G.key,
+                'anthropic-version': '2023-06-01',
+                'anthropic-dangerous-direct-browser-access': 'true'
+            },
+            body: JSON.stringify({
+                model: 'claude-haiku-4-5-20251001',
+                max_tokens: 160,
+                messages: [{ role:'user', content:prompt }]
+            })
+        });
+
+        const data = await res.json();
+        G.thinking = false; vis('thinking', false);
+        if (!res.ok) throw new Error(data.error?.message || 'API error ' + res.status);
+
+        let parsed;
+        try {
+            parsed = JSON.parse((data.content?.[0]?.text || '{}').replace(/```json|```/g,'').trim());
+        } catch {
+            parsed = { quality:'developing', response:"Great try! Can you tell me one more thing you remember from the story?", canAdvance:false };
+        }
+
+        const { quality, response, canAdvance } = parsed;
+        if (!G.log[G.qi]) G.log[G.qi] = { question:q.text, answers:[], quality, attempts:attempt };
+        else { G.log[G.qi].quality = quality; G.log[G.qi].attempts = attempt; }
+        G.log[G.qi].answers.push(ans);
+
+        g('ai-text').textContent = response;
+        vis('ai-bubble', true); refreshMic();
+        await speak(response);
+
+        if (canAdvance) { setTimeout(advance, 800); }
+        else { G.tries++; g('nudge').classList.add('vis'); refreshMic(); }
+
+    } catch(e) {
+        G.thinking = false; vis('thinking', false); refreshMic();
+        const msg = (e.message.includes('401') || e.message.includes('403'))
+            ? 'API key issue. Ask a grown-up to check the setup screen.'
+            : 'Connection problem. Check the internet and try again.';
+        err('q-err', msg);
+    }
+}
+
+// ── FLOW ───────────────────────────────────────────────────
+function showScreen(id) {
+    document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+    g(id).classList.add('active');
+    window.scrollTo({ top:0, behavior:'smooth' });
+}
+
+function saveKey() {
+    const k = g('api-input').value.trim();
+    if (!k || k.length < 20) { err('setup-err','Please enter your Anthropic API key.'); return; }
+    err('setup-err',''); G.key = k;
+    localStorage.setItem('bq_key', k);
+    showScreen('screen-welcome');
+}
+
+function selectWorld(key) {
+    G.world = WORLDS[key];
+    g('world-emoji').textContent = G.world.emoji;
+    g('world-title').textContent = G.world.title;
+    g('passage').textContent     = G.world.passage;
+    showScreen('screen-read');
+}
+
+function startMission() {
+    G.qi=0; G.tries=0; G.log=[]; G.transcript='';
+    loadQ(); showScreen('screen-q');
+    setTimeout(() => speak(QS[0].text), 700);
+}
+
+function loadQ() {
+    const q = QS[G.qi];
+    const b = g('badge');
+    b.textContent = q.badge; b.style.background = q.bg;
+    b.style.color = q.color; b.style.borderColor = q.color;
+    g('qtext').textContent = q.text;
+    G.transcript=''; G.tries=0;
+    g('child-text').textContent=''; g('ai-text').textContent='';
+    vis('child-bubble',false); vis('ai-bubble',false); vis('thinking',false);
+    g('nudge').classList.remove('vis'); err('q-err','');
+    updateDots(); refreshMic();
+}
+
+function updateDots() {
+    for (let i=0;i<5;i++) {
+        const d=g('d'+i); d.className='progress-dot';
+        if(i<G.qi) d.classList.add('done');
+        else if(i===G.qi) d.classList.add('active');
+    }
+}
+
+function advance() {
+    G.qi++;
+    if (G.qi>=5) { showComplete(); return; }
+    loadQ(); setTimeout(()=>speak(QS[G.qi].text), 400);
+}
+
+function showComplete() {
+    speechSynthesis.cancel(); stopHeartbeat();
+    buildSummary(); showScreen('screen-done');
+    setTimeout(()=>speak('Amazing work! Mission complete! Your brain just leveled up!'), 600);
+    confetti();
+}
+
+function buildSummary() {
+    const c=g('summary'); c.innerHTML='';
+    QS.forEach((q,i)=>{
+        const log=G.log[i]||{question:q.text,answers:['No answer recorded'],quality:'developing',attempts:1};
+        const strong=log.quality==='strong';
+        const div=document.createElement('div'); div.className='summary-item';
+        div.innerHTML=`<div class="sum-qlbl">CHALLENGE ${i+1}</div>
+            <div class="sum-qtxt">${q.text}</div>
+            <div class="sum-ans">"${log.answers[log.answers.length-1]||'No answer'}"</div>
+            <span class="sum-badge ${strong?'b-strong':'b-growing'}">${strong?'⭐ Strong':'🌱 Still Growing'}</span>
+            ${log.attempts>1?`<span style="color:var(--muted);font-size:0.75rem;font-weight:700;margin-left:8px;">${log.attempts} tries</span>`:''}`;
+        c.appendChild(div);
+    });
+}
+
+function resetGame() {
+    speechSynthesis.cancel(); stopHeartbeat();
+    G.world=null; G.qi=0; G.tries=0; G.log=[];
+    G.transcript=''; G.recog=null;
+    G.speaking=false; G.thinking=false; G.listening=false;
+    showScreen('screen-world');
+}
+
+// ── UTILS ──────────────────────────────────────────────────
+function g(id)       { return document.getElementById(id); }
+function vis(id, on) { const e=g(id); if(e) e.classList.toggle('vis', on); }
+function err(id, msg){ const e=g(id); if(!e) return; e.textContent=msg; e.classList.toggle('vis',!!msg); }
+
+function confetti() {
+    const col=['#fbbf24','#4ade80','#38bdf8','#f472b6','#c084fc','#fb923c'];
+    for(let i=0;i<65;i++) setTimeout(()=>{
+        const p=document.createElement('div'); p.className='confetti-piece';
+        const sz=6+Math.random()*8;
+        p.style.cssText=`left:${Math.random()*100}vw;width:${sz}px;height:${sz}px;background:${col[Math.floor(Math.random()*col.length)]};border-radius:${Math.random()>.5?'50%':'2px'};animation-duration:${1.5+Math.random()*2}s;`;
+        document.body.appendChild(p); setTimeout(()=>p.remove(),4000);
+    }, i*38);
+}
+
+// ── INIT ───────────────────────────────────────────────────
+(function(){
+    const k=localStorage.getItem('bq_key');
+    if(k && k.length>20){ G.key=k; showScreen('screen-welcome'); }
+    else showScreen('screen-setup');
+})();
+</script>
+</body>
+</html>
